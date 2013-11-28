@@ -190,24 +190,25 @@ public class YandexMoneyImpl implements YandexMoney {
     public OperationIncome notifyIncome(String accessToken, String lastOperationId)
             throws InsufficientScopeException, InvalidTokenException, IOException {
 
-        OperationDetailResponse lastOperationDetail = operationDetail(accessToken, lastOperationId);
+        OperationDetailResponse lastKnownOperationResponse = operationDetail(accessToken, lastOperationId);
+        if (!lastKnownOperationResponse.isSuccess()) {
+            throw new IllegalArgumentException(String.format("wrong operation_id: %s, error: %s",
+                    lastOperationId, lastKnownOperationResponse.getError()));
+        }
 
         List<Operation> list = new ArrayList<Operation>();
+        Date currentTime = new Date();
         Integer rowStart = 0;
         do {
-            OperationHistoryResponse res = operationHistory(accessToken, rowStart, 5,
-                    EnumSet.of(OperationHistoryType.deposition), true, lastOperationDetail.getDatetime(), null, null);
-
-            if (!res.isSuccess()) {
-                throw new RuntimeException("operation-history return error: " + res.getError());
-            }
+            OperationHistoryResponse res = operationHistory(accessToken, rowStart, 100,
+                    EnumSet.of(OperationHistoryType.deposition), true, lastKnownOperationResponse.getDatetime(), currentTime, null);
 
             list.addAll(res.getOperations());
             rowStart = res.getNextRecord();
 
         } while (rowStart != null);
 
-        Operation lastOperation = list.isEmpty() ? lastOperationDetail : list.get(0);
+        Operation lastOperation = list.isEmpty() ? lastKnownOperationResponse : list.get(0);
         return new OperationIncome(list, lastOperation.getOperationId());
     }
 }
