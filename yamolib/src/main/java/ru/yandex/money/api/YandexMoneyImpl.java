@@ -187,32 +187,27 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.processPaymentByCard(accessToken, requestId, csc);
     }
 
-    public OperationIncome notifyIncome(String accessToken, String lastOperation)
+    public OperationIncome notifyIncome(String accessToken, String lastOperationId)
             throws InsufficientScopeException, InvalidTokenException, IOException {
 
+        OperationDetailResponse lastOperationDetail = operationDetail(accessToken, lastOperationId);
+
         List<Operation> list = new ArrayList<Operation>();
-        Operation maxOperation = null;
-
-        OperationDetailResponse lastOperationDetail = operationDetail(accessToken, lastOperation);
-
         Integer rowStart = 0;
         do {
             OperationHistoryResponse res = operationHistory(accessToken, rowStart, 5,
                     EnumSet.of(OperationHistoryType.deposition), true, lastOperationDetail.getDatetime(), null, null);
+
             if (!res.isSuccess()) {
                 throw new RuntimeException("operation-history return error: " + res.getError());
             }
 
-            List<Operation> operations = res.getOperations();
-            if (maxOperation == null) {
-                maxOperation = operations.isEmpty() ? lastOperationDetail : operations.get(0);
-            }
+            list.addAll(res.getOperations());
             rowStart = res.getNextRecord();
-
-            list.addAll(operations);
 
         } while (rowStart != null);
 
-        return new OperationIncome(list, maxOperation.getOperationId());
+        Operation lastOperation = list.isEmpty() ? lastOperationDetail : list.get(0);
+        return new OperationIncome(list, lastOperation.getOperationId());
     }
 }
