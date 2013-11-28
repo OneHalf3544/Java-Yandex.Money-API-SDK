@@ -4,17 +4,16 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpConnectionParams;
+import ru.yandex.money.api.enums.MoneyDirection;
 import ru.yandex.money.api.enums.OperationHistoryType;
 import ru.yandex.money.api.response.*;
+import ru.yandex.money.api.response.util.Operation;
 import ru.yandex.money.api.rights.IdentifierType;
 import ru.yandex.money.api.rights.Permission;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>Класс для работы с API Яндекс.Деньги. Реализует интерфейс YandexMoney.</p>
@@ -187,5 +186,53 @@ public class YandexMoneyImpl implements YandexMoney {
             throws IOException, InsufficientScopeException, InvalidTokenException {
 
         return apiCommandsFacade.processPaymentByCard(accessToken, requestId, csc);
+    }
+    protected static class CollisionException extends Exception {
+        private static final long serialVersionUID = -727297981409385426L;
+    }
+
+    public OperationIncome notifyIncome(String accessToken, Long lastOperation) {
+        while (true) {
+            try {
+                return read(accessToken, lastOperation);
+            } catch (CollisionException ignore) {
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    OperationIncome read(String token, Long lastOperation) throws Exception {
+        TreeMap<Long, OperationDetailResponse> list = new TreeMap<Long, OperationDetailResponse>();
+        Long maxOperation = 0L;
+
+        Integer rowStart = new Integer(0);
+        while (rowStart != null) {
+            OperationHistoryResponse res = operationHistory(token, rowStart, 5);
+
+            if (!res.isSuccess())
+                throw new Exception(res.getError());
+
+            rowStart = res.getNextRecord();
+
+            for (Operation o : res.getOperations()) {
+                Long operationId = Long.valueOf(o.getOperationId());
+
+                maxOperation = Math.max(operationId, maxOperation);
+
+                if (o.getDirection() == MoneyDirection.in) {
+                    if (operationId.equals(lastOperation))
+                        return new OperationIncome(list.values(), maxOperation);
+                    OperationDetailResponse detail = operationDetail(token, o.getOperationId());
+                    if (list.put(operationId, detail) != null)
+                        throw new CollisionException();
+                }
+            }
+        }
+        if (lastOperation != null)
+            throw new RuntimeException("No last operation found");
+        return new OperationIncome(list.values(), maxOperation);
     }
 }
