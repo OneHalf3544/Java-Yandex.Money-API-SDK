@@ -190,7 +190,7 @@ public class YandexMoneyImpl implements YandexMoney {
     public OperationIncome notifyIncome(String accessToken, String lastOperation)
             throws InsufficientScopeException, InvalidTokenException, IOException {
 
-        TreeMap<String, Operation> list = new TreeMap<String, Operation>();
+        List<Operation> list = new ArrayList<Operation>();
         Operation maxOperation = null;
 
         OperationDetailResponse lastOperationDetail = operationDetail(accessToken, lastOperation);
@@ -209,11 +209,10 @@ public class YandexMoneyImpl implements YandexMoney {
             }
             rowStart = res.getNextRecord();
 
-            for (Operation operation : operations) {
-                list.put(operation.getOperationId(), operation);
-            }
+            list.addAll(operations);
+
         } while (rowStart != null);
 
-        return new OperationIncome(list.values(), maxOperation.getOperationId());
+        return new OperationIncome(list, maxOperation.getOperationId());
     }
 }
