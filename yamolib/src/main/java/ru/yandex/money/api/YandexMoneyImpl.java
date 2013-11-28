@@ -4,7 +4,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpConnectionParams;
-import ru.yandex.money.api.enums.MoneyDirection;
 import ru.yandex.money.api.enums.OperationHistoryType;
 import ru.yandex.money.api.response.*;
 import ru.yandex.money.api.response.util.Operation;
@@ -187,52 +186,34 @@ public class YandexMoneyImpl implements YandexMoney {
 
         return apiCommandsFacade.processPaymentByCard(accessToken, requestId, csc);
     }
-    protected static class CollisionException extends Exception {
-        private static final long serialVersionUID = -727297981409385426L;
-    }
 
-    public OperationIncome notifyIncome(String accessToken, Long lastOperation) {
-        while (true) {
-            try {
-                return read(accessToken, lastOperation);
-            } catch (CollisionException ignore) {
-            } catch (RuntimeException e) {
-                throw e;
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+    public OperationIncome notifyIncome(String accessToken, String lastOperation)
+            throws InsufficientScopeException, InvalidTokenException, IOException {
+
+        TreeMap<String, Operation> list = new TreeMap<String, Operation>();
+        Operation maxOperation = null;
+
+        OperationDetailResponse lastOperationDetail = operationDetail(accessToken, lastOperation);
+
+        Integer rowStart = 0;
+        do {
+            OperationHistoryResponse res = operationHistory(accessToken, rowStart, 5,
+                    EnumSet.of(OperationHistoryType.deposition), true, lastOperationDetail.getDatetime(), null, null);
+            if (!res.isSuccess()) {
+                throw new RuntimeException("operation-history return error: " + res.getError());
             }
-        }
-    }
 
-    OperationIncome read(String token, Long lastOperation) throws Exception {
-        TreeMap<Long, OperationDetailResponse> list = new TreeMap<Long, OperationDetailResponse>();
-        Long maxOperation = 0L;
-
-        Integer rowStart = new Integer(0);
-        while (rowStart != null) {
-            OperationHistoryResponse res = operationHistory(token, rowStart, 5);
-
-            if (!res.isSuccess())
-                throw new Exception(res.getError());
-
+            List<Operation> operations = res.getOperations();
+            if (maxOperation == null) {
+                maxOperation = operations.isEmpty() ? lastOperationDetail : operations.get(0);
+            }
             rowStart = res.getNextRecord();
 
-            for (Operation o : res.getOperations()) {
-                Long operationId = Long.valueOf(o.getOperationId());
-
-                maxOperation = Math.max(operationId, maxOperation);
-
-                if (o.getDirection() == MoneyDirection.in) {
-                    if (operationId.equals(lastOperation))
-                        return new OperationIncome(list.values(), maxOperation);
-                    OperationDetailResponse detail = operationDetail(token, o.getOperationId());
-                    if (list.put(operationId, detail) != null)
-                        throw new CollisionException();
-                }
+            for (Operation operation : operations) {
+                list.put(operation.getOperationId(), operation);
             }
-        }
-        if (lastOperation != null)
-            throw new RuntimeException("No last operation found");
-        return new OperationIncome(list.values(), maxOperation);
+        } while (rowStart != null);
+
+        return new OperationIncome(list.values(), maxOperation.getOperationId());
     }
 }

@@ -2,6 +2,8 @@ package ru.yandex.money.api;
 
 import ru.yandex.money.api.response.OperationIncome;
 
+import java.io.IOException;
+
 /**
  * Интерфейс общения приложения с API Яндекс.Деньги.
  *
@@ -18,5 +20,5 @@ public interface YandexMoney extends TokenRequester, ApiCommandsFacade {
      *
      * @return  возвращает экземпляр класса {@link OperationIncome}
      */
-    public OperationIncome notifyIncome(String accessToken, Long lastOperation);
+    public OperationIncome notifyIncome(String accessToken, String lastOperation) throws InsufficientScopeException, InvalidTokenException, IOException;
 }
