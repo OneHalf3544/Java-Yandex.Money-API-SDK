@@ -1,9 +1,6 @@
 package ru.yandex.money.api;
 
 import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
 import ru.yandex.money.api.enums.OperationHistoryType;
 import ru.yandex.money.api.response.*;
 import ru.yandex.money.api.rights.IdentifierType;
@@ -28,10 +25,8 @@ import java.util.Set;
  *
  * @author dvmelnikov
  */
-
+@Deprecated
 public class YandexMoneyImpl implements YandexMoney {
-
-    private static final String USER_AGENT = "yamolib";
 
     private final TokenRequester tokenRequester;
     private final ApiCommandsFacade apiCommandsFacade;
@@ -44,15 +39,7 @@ public class YandexMoneyImpl implements YandexMoney {
      * @param clientId идентификатор приложения в системе Яндекс.Деньги
      */
     public YandexMoneyImpl(String clientId) {
-        this(clientId, createHttpClient(60100));
-    }
-
-    static HttpClient createHttpClient(int socketTimeout) {
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
-        HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 4000);
-        HttpConnectionParams.setSoTimeout(httpClient.getParams(), socketTimeout);
-        return httpClient;
+        this(clientId, YamoneyApiClient.createHttpClient(60100));
     }
 
     /**
