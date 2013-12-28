@@ -193,6 +193,7 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.processPaymentByCard(accessToken, requestId, csc);
     }
 
+    @Override
     public OperationIncome notifyIncome(String accessToken, String lastOperationId)
             throws InsufficientScopeException, InvalidTokenException, IOException {
 
