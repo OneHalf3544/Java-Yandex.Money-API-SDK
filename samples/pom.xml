@@ -17,7 +17,6 @@
 
     <modules>
         <module>yamolib-sample</module>
-        <module>yamodroid-sample</module>
     </modules>
 
 </project>
