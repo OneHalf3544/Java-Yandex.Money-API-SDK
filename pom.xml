@@ -9,7 +9,6 @@
 
     <modules>
         <module>yamolib</module>
-        <module>yamodroid</module>
         <module>samples</module>
   </modules>
 
