@@ -9,7 +9,7 @@
 
     <modules>
         <module>yamolib</module>
-        <module>samples</module>
+        <module>yamolib-sample</module>
   </modules>
 
 </project>
