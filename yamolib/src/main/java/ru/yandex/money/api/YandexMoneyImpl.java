@@ -1,9 +1,6 @@
 package ru.yandex.money.api;
 
 import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
 import ru.yandex.money.api.enums.OperationHistoryType;
 import ru.yandex.money.api.response.*;
 import ru.yandex.money.api.response.util.Operation;
@@ -26,10 +23,8 @@ import java.util.*;
  *
  * @author dvmelnikov
  */
-
+@Deprecated
 public class YandexMoneyImpl implements YandexMoney {
-
-    private static final String USER_AGENT = "yamolib";
 
     private final TokenRequester tokenRequester;
     private final ApiCommandsFacade apiCommandsFacade;
@@ -42,15 +37,7 @@ public class YandexMoneyImpl implements YandexMoney {
      * @param clientId идентификатор приложения в системе Яндекс.Деньги
      */
     public YandexMoneyImpl(String clientId) {
-        this(clientId, createHttpClient(60100));
-    }
-
-    static HttpClient createHttpClient(int socketTimeout) {
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
-        HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 4000);
-        HttpConnectionParams.setSoTimeout(httpClient.getParams(), socketTimeout);
-        return httpClient;
+        this(clientId, YamoneyApiClient.createHttpClient(60100));
     }
 
     /**
@@ -66,10 +53,12 @@ public class YandexMoneyImpl implements YandexMoney {
         this.apiCommandsFacade = new ApiCommandsFacadeImpl(client);
     }
 
+    @Override
     public String getClientId() {
         return tokenRequester.getClientId();
     }
 
+    @Override
     public String authorizeUri(Collection<Permission> permissions, String redirectUri, Boolean mobileMode) {
         return tokenRequester.authorizeUri(permissions, redirectUri, mobileMode);
     }
@@ -79,41 +68,49 @@ public class YandexMoneyImpl implements YandexMoney {
         return tokenRequester.authorizeUri(scope, redirectUri, mobileMode);
     }
 
+    @Override
     public ReceiveOAuthTokenResponse receiveOAuthToken(String code,
                                                        String redirectUri) throws IOException, InsufficientScopeException {
         return tokenRequester.receiveOAuthToken(code, redirectUri);
     }
 
+    @Override
     public ReceiveOAuthTokenResponse receiveOAuthToken(String code,
                                                        String redirectUri, String clientSecret) throws IOException, InsufficientScopeException {
         return tokenRequester.receiveOAuthToken(code, redirectUri, clientSecret);
     }
 
+    @Override
     public void revokeOAuthToken(String accessToken) throws InvalidTokenException, IOException {
         apiCommandsFacade.revokeOAuthToken(accessToken);
     }
 
+    @Override
     public AccountInfoResponse accountInfo(String accessToken)
             throws IOException, InvalidTokenException, InsufficientScopeException {
         return apiCommandsFacade.accountInfo(accessToken);
     }
 
+    @Override
     public OperationHistoryResponse operationHistory(String accessToken)
             throws IOException, InvalidTokenException, InsufficientScopeException {
         return apiCommandsFacade.operationHistory(accessToken);
     }
 
+    @Override
     public OperationHistoryResponse operationHistory(String accessToken, Integer startRecord)
             throws IOException, InvalidTokenException, InsufficientScopeException {
         return operationHistory(accessToken, startRecord, null);
     }
 
+    @Override
     public OperationHistoryResponse operationHistory(String accessToken,
                                                      Integer startRecord, Integer records) throws IOException,
             InvalidTokenException, InsufficientScopeException {
         return operationHistory(accessToken, startRecord, records, null);
     }
 
+    @Override
     public OperationHistoryResponse operationHistory(String accessToken,
                                                      Integer startRecord, Integer records,
                                                      Set<OperationHistoryType> operationsType) throws IOException,
@@ -122,6 +119,7 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.operationHistory(accessToken, startRecord, records, operationsType);
     }
 
+    @Override
     public OperationHistoryResponse operationHistory(String accessToken, Integer startRecord, Integer records,
                                                      Set<OperationHistoryType> operationsType, Boolean fetchDetails,
                                                      Date from, Date till, String label)
@@ -135,6 +133,7 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.fundraisingStats(accessToken, label);
     }
 
+    @Override
     public OperationDetailResponse operationDetail(String accessToken,
                                                    String operationId) throws IOException, InvalidTokenException,
             InsufficientScopeException {
@@ -142,6 +141,7 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.operationDetail(accessToken, operationId);
     }
 
+    @Override
     public RequestPaymentResponse requestPaymentP2PDue(String accessToken, String to, IdentifierType identifierType,
                                                        BigDecimal amountDue, String comment, String message, String label)
             throws IOException, InvalidTokenException, InsufficientScopeException {
@@ -149,6 +149,7 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.requestPaymentP2PDue(accessToken, to, identifierType, amountDue, comment, message, label);
     }
 
+    @Override
     public RequestPaymentResponse requestPaymentP2P(String accessToken, String to, IdentifierType identifierType,
                                                     BigDecimal amount, String comment, String message, String label)
             throws IOException, InvalidTokenException, InsufficientScopeException {
@@ -156,6 +157,7 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.requestPaymentP2P(accessToken, to, identifierType, amount, comment, message, label);
     }
 
+    @Override
     public RequestPaymentResponse requestPaymentP2P(String accessToken, String to, BigDecimal amount,
                                                     String comment, String message)
             throws IOException, InvalidTokenException, InsufficientScopeException {
@@ -163,11 +165,13 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.requestPaymentP2P(accessToken, to, amount, comment, message);
     }
 
+    @Override
     public RequestPaymentResponse requestPaymentToPhone(String accessToken, String phone, BigDecimal amount)
             throws InsufficientScopeException, InvalidTokenException, IOException {
         return apiCommandsFacade.requestPaymentToPhone(accessToken, phone, amount);
     }
 
+    @Override
     public RequestPaymentResponse requestPaymentShop(String accessToken,
                                                      String patternId, Map<String, String> params) throws IOException,
             InvalidTokenException, InsufficientScopeException {
@@ -175,12 +179,14 @@ public class YandexMoneyImpl implements YandexMoney {
         return apiCommandsFacade.requestPaymentShop(accessToken, patternId, params);
     }
 
+    @Override
     public ProcessPaymentResponse processPaymentByWallet(String accessToken,
                                                          String requestId) throws IOException, InsufficientScopeException,
             InvalidTokenException {
         return apiCommandsFacade.processPaymentByWallet(accessToken, requestId);
     }
 
+    @Override
     public ProcessPaymentResponse processPaymentByCard(String accessToken, String requestId, String csc)
             throws IOException, InsufficientScopeException, InvalidTokenException {
 

@@ -9,6 +9,7 @@ import java.io.IOException;
  *
  * @author dvmelnikov
  */
+@Deprecated
 public interface YandexMoney extends TokenRequester, ApiCommandsFacade {
 
     /**

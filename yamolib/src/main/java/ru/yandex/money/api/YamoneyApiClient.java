@@ -10,6 +10,9 @@ import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -28,11 +31,20 @@ class YamoneyApiClient {
     private static final String CHARSET = "UTF-8";
 
     private static final Log LOGGER = LogFactory.getLog(YamoneyApiClient.class);
+    private static final String USER_AGENT = "yamolib";
 
     private final HttpClient httpClient;
 
     public YamoneyApiClient(HttpClient httpClient) {
         this.httpClient = httpClient;
+    }
+
+    static HttpClient createHttpClient(int socketTimeout) {
+        DefaultHttpClient httpClient = new DefaultHttpClient();
+        httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
+        HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 4000);
+        HttpConnectionParams.setSoTimeout(httpClient.getParams(), socketTimeout);
+        return httpClient;
     }
 
     <T> T executeForJsonObjectCommon(String url, List<NameValuePair> params, Class<T> classOfT)
@@ -65,7 +77,7 @@ class YamoneyApiClient {
             int iCode = response.getStatusLine().getStatusCode();
             if (iCode != HttpStatus.SC_OK) {
                 Header wwwAuthenticate = response.getFirstHeader("WWW-Authenticate");
-                LOGGER.info("http status: " + iCode + ", WWW-Authenticate: " + wwwAuthenticate);
+                LOGGER.info("http status: " + iCode + (wwwAuthenticate == null ? "" : ", " + wwwAuthenticate));
             }
             return response;
         } catch (IOException e) {
