@@ -8,6 +8,12 @@
     <version>1.0-SNAPSHOT</version>
     <name>yamolib-sample</name>
     <url>http://maven.apache.org</url>
+
+    <properties>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.6</maven.compiler.source>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -55,4 +61,17 @@
             </resource>
         </resources>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>http://localhost:8111/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>http://localhost:8111/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>

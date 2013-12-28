@@ -15,6 +15,25 @@
     <modules>
         <module>yamolib</module>
         <module>yamolib-sample</module>
-  </modules>
+    </modules>
 
+    <repositories>
+        <repository>
+            <id>local-nexus</id>
+            <url>http://localhost:8111/nexus/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <repository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>http://localhost:8111/nexus/content/repositories/releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>http://localhost:8111/nexus/content/repositories/snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
