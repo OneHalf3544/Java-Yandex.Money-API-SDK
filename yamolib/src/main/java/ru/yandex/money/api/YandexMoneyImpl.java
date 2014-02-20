@@ -70,13 +70,13 @@ public class YandexMoneyImpl implements YandexMoney {
 
     @Override
     public ReceiveOAuthTokenResponse receiveOAuthToken(String code,
-                                                       String redirectUri) throws IOException, InsufficientScopeException {
+                                                       String redirectUri) throws IOException {
         return tokenRequester.receiveOAuthToken(code, redirectUri);
     }
 
     @Override
     public ReceiveOAuthTokenResponse receiveOAuthToken(String code,
-                                                       String redirectUri, String clientSecret) throws IOException, InsufficientScopeException {
+                                                       String redirectUri, String clientSecret) throws IOException {
         return tokenRequester.receiveOAuthToken(code, redirectUri, clientSecret);
     }
 
@@ -217,5 +217,10 @@ public class YandexMoneyImpl implements YandexMoney {
 
         Operation lastOperation = list.isEmpty() ? lastKnownOperationResponse : list.get(0);
         return new OperationIncome(list, lastOperation.getOperationId());
+    }
+
+    @Override
+    public String makeScope(Collection<Permission> permissions) {
+        return tokenRequester.makeScope(permissions);
     }
 }
