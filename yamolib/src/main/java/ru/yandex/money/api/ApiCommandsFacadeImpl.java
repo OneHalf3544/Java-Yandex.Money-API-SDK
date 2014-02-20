@@ -6,7 +6,6 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import ru.yandex.money.api.enums.MoneySource;
 import ru.yandex.money.api.enums.OperationHistoryType;
 import ru.yandex.money.api.response.*;
@@ -285,7 +284,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
             }
         } finally {
             if (response != null) {
-                EntityUtils.consume(response.getEntity());
+                YamoneyApiClient.consumeEntity(response.getEntity());
             }
         }
     }

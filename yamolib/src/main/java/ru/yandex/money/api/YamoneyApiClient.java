@@ -13,7 +13,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,7 +57,7 @@ class YamoneyApiClient {
             return parseJson(response.getEntity(), classOfT);
         } finally {
             if (response != null) {
-                EntityUtils.consume(response.getEntity());
+                consumeEntity(response.getEntity());
             }
         }
     }
@@ -162,7 +161,28 @@ class YamoneyApiClient {
             return parseJson(response.getEntity(), classOfT);
         } finally {
             if (response != null) {
-                EntityUtils.consume(response.getEntity());
+                consumeEntity(response.getEntity());
+            }
+        }
+    }
+
+    /**
+     * Ensures that the entity content is fully consumed and the content stream, if exists,
+     * is closed.
+     *
+     * @param entity
+     * @throws IOException if an error occurs reading the input stream
+     *
+     * @since 4.1
+     */
+    public static void consumeEntity(final HttpEntity entity) throws IOException {
+        if (entity == null) {
+            return;
+        }
+        if (entity.isStreaming()) {
+            InputStream inputStream = entity.getContent();
+            if (inputStream != null) {
+                inputStream.close();
             }
         }
     }
