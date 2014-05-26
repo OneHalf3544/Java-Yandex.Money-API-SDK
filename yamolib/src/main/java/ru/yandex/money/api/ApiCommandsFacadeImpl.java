@@ -123,7 +123,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
 
     @Override
     public OperationHistoryResponse operationHistory(String accessToken, Integer startRecord, Integer records,
-                                                     Set<OperationHistoryType> operationsType) throws IOException,
+                                                     OperationHistoryType operationsType) throws IOException,
             InvalidTokenException, InsufficientScopeException {
         return operationHistory(accessToken, startRecord, records, operationsType, null, null, null, null);
     }
@@ -131,7 +131,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
     @Override
     public OperationHistoryResponse operationHistory(String accessToken,
                                                      Integer startRecord, Integer records,
-                                                     Set<OperationHistoryType> operationsType, Boolean fetchDetails,
+                                                     OperationHistoryType operationsType, Boolean fetchDetails,
                                                      Date from, Date till, String label) throws IOException,
             InvalidTokenException, InsufficientScopeException {
 
@@ -139,7 +139,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
 
         addParamIfNotNull("start_record", startRecord, params);
         addParamIfNotNull("records", records, params);
-        addParamIfNotNull("type", joinHistoryTypes(operationsType), params);
+        addParamIfNotNull("type", operationsType.getCode(), params);
         addParamIfNotNull("details", fetchDetails, params);
         addParamIfNotNull("from", from, params);
         addParamIfNotNull("till", till, params);
@@ -315,16 +315,5 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
 
     String formatDate(Date date) {
         return RFC_3339.get().format(date).replaceAll("(\\d\\d)(\\d\\d)$", "$1:$2");
-    }
-
-    private String joinHistoryTypes(Set<OperationHistoryType> operationsType) {
-        if (operationsType == null || operationsType.isEmpty()) {
-            return null;
-        }
-        StringBuilder result = new StringBuilder();
-        for (OperationHistoryType op : operationsType) {
-            result.append(op.toString()).append(" ");
-        }
-        return result.toString().trim();
     }
 }

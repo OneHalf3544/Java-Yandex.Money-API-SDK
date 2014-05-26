@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
 
@@ -51,7 +50,7 @@ public class ApiCommandsFacadeTest {
     @Test
     public void testOperationHistory() throws InsufficientScopeException, InvalidTokenException, IOException {
         OperationHistoryResponse response = facade.operationHistory(
-                AUTH_TOKEN, 0, 5, EnumSet.of(OperationHistoryType.payment), true, null, null, null);
+                AUTH_TOKEN, 0, 5, OperationHistoryType.PAYMENT, true, null, null, null);
 
         for (Operation operation : response.getOperations()) {
             System.out.println(operation);
@@ -60,7 +59,7 @@ public class ApiCommandsFacadeTest {
 
     @Test
     public void testLabeledOperationHistory() throws InsufficientScopeException, InvalidTokenException, IOException {
-        facade.operationHistory(AUTH_TOKEN, 0, 5, EnumSet.of(OperationHistoryType.deposition), true, null, null, "labeled payment");
+        facade.operationHistory(AUTH_TOKEN, 0, 5, OperationHistoryType.DEPOSITION, true, null, null, "labeled payment");
     }
 
     @Test

@@ -52,21 +52,8 @@ public class Payment extends AbstractLimitedPermission {
         return this;
     }
 
-    public AbstractLimitedPermission toAccount(String account) {
-        destination = "to-account(\"" + account + "\")";
-        return this;
-    }
-
-    /**
-     * Указание получателя p2p платежа и типа идентификатора. Можно выполнять платежи
-     * идентифицируя получателя по его email, номеру телефона или номеру счета
-     *
-     * @param receiver Идентификатор получателя
-     * @param identifierType Тип получателя
-     * @return этот же обхект для дальнейшего указания лимитов
-     */
-    public AbstractLimitedPermission toAccount(String receiver, IdentifierType identifierType) {
-        destination = "to-account(\"" + receiver + "\",\""+ identifierType + "\")";
+    public AbstractLimitedPermission toAccount(String receiver) {
+        destination = "to-account(\"" + receiver + "\")";
         return this;
     }
 

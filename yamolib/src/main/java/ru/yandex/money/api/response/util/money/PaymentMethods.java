@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 /**
  * Доступные для приложения методы проведения платежа,
- * Присутствует только при успешном выполнении методов {@link ru.yandex.money.api.YandexMoney} requestPayment*.
+ * Присутствует только при успешном выполнении методов {@link ru.yandex.money.api.ApiCommandsFacade} requestPayment*.
  *
  * @author dvmelnikov
  */

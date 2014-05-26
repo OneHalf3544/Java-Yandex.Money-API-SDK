@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Команды, использующие авторизационный токен для выполнения действий от имени пользователя.
@@ -79,7 +78,7 @@ public interface ApiCommandsFacade {
      */
     OperationHistoryResponse operationHistory(String accessToken,
                                               Integer startRecord, Integer records,
-                                              Set<OperationHistoryType> operationsType) throws IOException,
+                                              OperationHistoryType operationsType) throws IOException,
             InvalidTokenException, InsufficientScopeException;
 
     /**
@@ -169,7 +168,7 @@ public interface ApiCommandsFacade {
      */
     OperationHistoryResponse operationHistory(String accessToken,
                                               Integer startRecord, Integer records,
-                                              Set<OperationHistoryType> operationsType, Boolean fetchDetails,
+                                              OperationHistoryType operationsType, Boolean fetchDetails,
                                               Date from, Date till, String label) throws IOException,
             InvalidTokenException, InsufficientScopeException;
 

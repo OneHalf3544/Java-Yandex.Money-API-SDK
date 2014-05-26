@@ -10,10 +10,25 @@ public enum OperationHistoryType {
     /**
      * Тип расход (платежи)
      */
-    payment,
+    PAYMENT("payment"),
 
     /**
      * Тип приход (пополнения)
      */
-    deposition
+    DEPOSITION("deposition"),
+
+    /**
+     * Тип приход (пополнения)
+     */
+    INCOMING_TRANSFERS_UNACCEPTED("incoming-transfers-unaccepted");
+
+    private final String code;
+
+    OperationHistoryType(String code) {
+        this.code = code;
+    }
+
+    public String getCode() {
+        return code;
+    }
 }

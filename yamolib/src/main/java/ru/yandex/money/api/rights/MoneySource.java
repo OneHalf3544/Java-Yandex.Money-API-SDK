@@ -25,6 +25,7 @@ public class MoneySource implements Permission {
         this.card = card;
     }
 
+    @Override
     public String value() {
         if (!wallet && !card) {
             throw new IllegalArgumentException("money-source expected");
