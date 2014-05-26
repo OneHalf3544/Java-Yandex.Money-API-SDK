@@ -18,7 +18,7 @@ public enum OperationHistoryType {
     DEPOSITION("deposition"),
 
     /**
-     * Тип приход (пополнения)
+     * Непринятые входящие P2P-переводы любого типа.
      */
     INCOMING_TRANSFERS_UNACCEPTED("incoming-transfers-unaccepted");
 
