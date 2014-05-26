@@ -16,6 +16,6 @@
     <modules>
         <module>yamolib</module>
         <module>yamolib-sample</module>
-  </modules>
+    </modules>
 
 </project>

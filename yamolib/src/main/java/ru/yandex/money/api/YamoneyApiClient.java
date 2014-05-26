@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class YamoneyApiClient {
+public class YamoneyApiClient {
 
     /**
      * Кодировка для url encoding/decoding
@@ -39,7 +39,7 @@ class YamoneyApiClient {
         this.httpClient = httpClient;
     }
 
-    static HttpClient createHttpClient(int socketTimeout) {
+    public static HttpClient createHttpClient(int socketTimeout) {
         DefaultHttpClient httpClient = new DefaultHttpClient();
         httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
         HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 4000);
