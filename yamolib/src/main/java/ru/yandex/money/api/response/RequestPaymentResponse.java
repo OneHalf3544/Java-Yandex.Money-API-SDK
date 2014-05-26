@@ -7,6 +7,7 @@ import ru.yandex.money.api.response.util.money.PaymentMethods;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * <p>Класс для возврата результата метода requestPayment</p>
@@ -29,6 +30,8 @@ public class RequestPaymentResponse implements Serializable {
     private Boolean recipient_identified;
     private String recipient_account_type;
     private Boolean test_payment;
+    private Map<String, String> contract_details;
+    private String ext_action_uri;
 
     private RequestPaymentResponse() {
     }
@@ -149,6 +152,24 @@ public class RequestPaymentResponse implements Serializable {
         return recipient_identified;
     }
 
+    /**
+     * Доп. параметры контракта.
+     * Присутствуют при плаетже в магазин, если в запросе присутствовал параметр show_contract_details=true
+     * @return
+     */
+    public Map<String, String> getContractDetails() {
+        return contract_details;
+    }
+
+    /**
+     * Uri, по которому нужно отправить пользователя в случае,
+     * если на request-payment вернулась ошибка "ext_action_required"
+     * @return
+     */
+    public String getExtActionUri() {
+        return ext_action_uri;
+    }
+
     @Override
     public String toString() {
         return "RequestPaymentResponse{" +
@@ -158,6 +179,7 @@ public class RequestPaymentResponse implements Serializable {
                 ", moneySource=" + moneySource +
                 ", requestId='" + requestId + '\'' +
                 ", contract='" + contract + '\'' +
+                ", contract_details='" + contract_details + '\'' +
                 ", balance=" + balance +
                 ", test_payment=" + test_payment +
                 ", recipient_identified=" + recipient_identified +
