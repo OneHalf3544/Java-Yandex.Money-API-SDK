@@ -4,6 +4,7 @@ import ru.yandex.money.api.response.ReceiveOAuthTokenResponse;
 import ru.yandex.money.api.rights.Permission;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 
 /**
@@ -25,19 +26,19 @@ public interface TokenRequester {
     /**
      * URI адреса для OAuth-авторизации. Пользователь приходит на этот адрес через браузер
      */
-    String URI_YM_AUTH =
-            "https://sp-money.yandex.ru/oauth/authorize";
+    URI URI_YM_AUTH =
+            URI.create("https://sp-money.yandex.ru/oauth/authorize");
     /**
      * URI адрес для мобильной OAuth-авторизации. Пользователь приходит на этот адрес через браузер мобильного
      */
-    String URI_YM_AUTH_MOBILE =
-            "https://m.sp-money.yandex.ru/oauth/authorize";
+    URI URI_YM_AUTH_MOBILE =
+            URI.create("https://m.sp-money.yandex.ru/oauth/authorize");
     /**
      * URI для обмена временного токена на постоянный. Здесь пользователь не участвует напрямую.
      * Запрос этого uri должен быть выполнен приложением минуя браузер. В ответ придет JSON с итоговым токеном.
      */
-    String URI_YM_TOKEN =
-            "https://sp-money.yandex.ru/oauth/token";
+    URI URI_YM_TOKEN =
+            URI.create("https://sp-money.yandex.ru/oauth/token");
 
     /**
      * Метод OAuth-аутентификации приложения для получения временного

@@ -1,9 +1,8 @@
 package ru.yandex.money.api;
 
-import org.apache.http.NameValuePair;
-
-import java.util.Collection;
+import java.net.URI;
 import java.util.Collections;
+import java.util.Map;
 
 /**
  * <p/>
@@ -17,9 +16,9 @@ public interface CommandUrlHolder {
 
     CommandUrlHolder DEFAULT = new ConstantUrlHolder(ApiCommandsFacade.URI_YM_API);
 
-    String getUrlForCommand(String commandName);
+    URI getUrlForCommand(String commandName);
 
-    Collection<NameValuePair> getAdditionalParams();
+    Map<String, String> getAdditionalParams();
 
     class ConstantUrlHolder implements CommandUrlHolder {
 
@@ -30,13 +29,13 @@ public interface CommandUrlHolder {
         }
 
         @Override
-        public String getUrlForCommand(String commandName) {
-            return uriYmApi + '/' + commandName;
+        public URI getUrlForCommand(String commandName) {
+            return URI.create(uriYmApi + '/' + commandName);
         }
 
         @Override
-        public Collection<NameValuePair> getAdditionalParams() {
-            return Collections.emptyList();
+        public Map<String, String> getAdditionalParams() {
+            return Collections.emptyMap();
         }
     }
 }

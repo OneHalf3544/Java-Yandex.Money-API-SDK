@@ -24,7 +24,7 @@ public class TokenRequesterTest {
 
     @BeforeClass
     public static void setUpClass() {
-        requester = new TokenRequesterImpl(CLIENT_ID, YamoneyApiClient.createHttpClient(4000));
+        requester = new TokenRequesterImpl(CLIENT_ID, YamoneyApiHttpClient.createHttpClient(4000));
     }
 
     @Test

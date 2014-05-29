@@ -1,128 +1,96 @@
 package ru.yandex.money.api;
 
+import com.google.common.collect.Maps;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.*;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-public class YamoneyApiClient {
+import static com.google.common.collect.Maps.transformEntries;
+
+/**
+ * <p/>
+ * <p/>
+ * Created: 26.05.2014 23:48
+ * <p/>
+ *
+ * @author OneHalf
+ */
+public abstract class YamoneyApiClient<Req, Resp> {
+
+    private static final Log LOGGER = LogFactory.getLog(YamoneyApiClient.class);
 
     /**
      * Кодировка для url encoding/decoding
      */
-    private static final String CHARSET = "UTF-8";
+    protected static final String CHARSET = "UTF-8";
+    protected static final String USER_AGENT = "yamolib";
 
-    private static final Log LOGGER = LogFactory.getLog(YamoneyApiClient.class);
-    private static final String USER_AGENT = "yamolib";
-
-    private final HttpClient httpClient;
-
-    public YamoneyApiClient(HttpClient httpClient) {
-        this.httpClient = httpClient;
-    }
-
-    public static HttpClient createHttpClient(int socketTimeout) {
-        DefaultHttpClient httpClient = new DefaultHttpClient();
-        httpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
-        HttpConnectionParams.setConnectionTimeout(httpClient.getParams(), 4000);
-        HttpConnectionParams.setSoTimeout(httpClient.getParams(), socketTimeout);
-        return httpClient;
-    }
-
-    <T> T executeForJsonObjectCommon(String url, List<NameValuePair> params, Class<T> classOfT) throws IOException {
-
-        HttpResponse response = null;
-        try {
-            response = execPostRequest(new HttpPost(url), params);
-            checkCommonResponse(response);
-
-            return parseJson(response.getEntity(), classOfT);
-        } finally {
-            if (response != null) {
-                consumeEntity(response.getEntity());
+    public static final Maps.EntryTransformer<String, String, String> CARD_CODE_MASKER = new Maps.EntryTransformer<String, String, String>() {
+        @Override
+        public String transformEntry(String key, String value) {
+            if (key.equalsIgnoreCase("csc")) {
+                return "***";
             }
+            return value;
         }
-    }
+    };
 
-    HttpResponse execPostRequest(HttpPost httpPost, String accessToken, List<NameValuePair> params) throws IOException {
-        httpPost.addHeader("Authorization", "Bearer " + accessToken);
-        return execPostRequest(httpPost, params);
-    }
-
-    HttpResponse execPostRequest(HttpPost httpPost, List<NameValuePair> params) throws IOException {
-        logParameters(httpPost.getURI(), params);
-        httpPost.setEntity(new UrlEncodedFormEntity(params, CHARSET));
-
-        try {
-            HttpResponse response = httpClient.execute(httpPost);
-            int iCode = response.getStatusLine().getStatusCode();
-            if (iCode != HttpStatus.SC_OK) {
-                Header wwwAuthenticate = response.getFirstHeader("WWW-Authenticate");
-                LOGGER.info("http status: " + iCode + (wwwAuthenticate == null ? "" : ", " + wwwAuthenticate));
-            }
-            return response;
-        } catch (IOException e) {
-            httpPost.abort();
-            throw e;
-        }
-    }
-
-    private void logParameters(URI uri, List<NameValuePair> params) {
+    protected void logParameters(URI uri, Map<String, String> params) {
         if (!LOGGER.isInfoEnabled()) {
             return;
         }
         // Пишем в логи все параметры, кроме кода карточки
-        Map<String, String> paramsForLog = new HashMap<String, String>();
-        for (NameValuePair param : params) {
-            if (param.getName().equalsIgnoreCase("csc")) {
-                paramsForLog.put(param.getName(), "***");
-            }
-            else {
-                paramsForLog.put(param.getName(), param.getValue());
-            }
-        }
-        LOGGER.info("request url '" + uri +"' with parameters: " + paramsForLog);
+        LOGGER.info("request url '" + uri +"' with parameters: " + transformEntries(params, CARD_CODE_MASKER));
     }
 
-    void checkCommonResponse(HttpResponse httpResp) throws InternalServerErrorException {
+    <T> T executeForJsonObjectCommon(URI url, Map<String, String> params, Class<T> classOfT) throws IOException {
 
-        switch (httpResp.getStatusLine().getStatusCode()) {
-            case HttpStatus.SC_BAD_REQUEST:
-                throw new ProtocolRequestException("invalid request");
-            case HttpStatus.SC_INTERNAL_SERVER_ERROR:
-                throw new InternalServerErrorException("internal yandex.money server error");
-        }
+        Resp response = null;
+        try {
+            response = execPostRequest(url, params);
+            checkCommonResponse(response);
 
-        if (httpResp.getEntity() == null) {
-            throw new IllegalStateException("response http entity is empty");
+            return parseJson(classOfT, getInputStreamFromResponse(response));
+        } finally {
+            closeResponse(response);
         }
     }
 
-    <T> T parseJson(HttpEntity entity, Class<T> classOfT) throws IOException {
-        InputStream is = entity.getContent();
+    protected abstract InputStream getInputStreamFromResponse(Resp response) throws IOException;
+
+    protected void logWWWAuthenticate(Resp response) {
+        int iCode = getStatusCodeFromResponse(response);
+        if (iCode != HttpStatus.SC_OK) {
+            String wwwAuthenticate = getHeaderValue(response);
+            LOGGER.info("http status: " + iCode + (wwwAuthenticate == null ? "" : ", " + wwwAuthenticate));
+        }
+    }
+
+    protected abstract String getHeaderValue(Resp response);
+
+    protected Resp execPostRequest(URI httpPost, Map<String, String> params) throws IOException {
+        return execPostRequest(httpPost, null, params);
+    }
+
+    protected abstract Resp execPostRequest(URI httpPost, String accessToken, Map<String, String> params) throws IOException;
+
+    <T> T parseJson(Class<T> classOfT, InputStream inputStream) throws IOException {
 
         try {
             Gson gson = new GsonBuilder().setFieldNamingPolicy(
                     FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
-            T result = gson.fromJson(new InputStreamReader(is, CHARSET), classOfT);
+            T result = gson.fromJson(new InputStreamReader(inputStream, CHARSET), classOfT);
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("result: " + result);
             }
@@ -132,64 +100,59 @@ public class YamoneyApiClient {
         }
     }
 
-
-    void checkApiCommandResponse(HttpResponse httpResp) throws InvalidTokenException,
+    void checkApiCommandResponse(Resp httpResp) throws InvalidTokenException,
             InsufficientScopeException, InternalServerErrorException {
 
-        if (httpResp.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
+        if (getStatusCodeFromResponse(httpResp) == HttpStatus.SC_UNAUTHORIZED) {
             throw new InvalidTokenException("invalid token");
         }
-        if (httpResp.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+        if (getStatusCodeFromResponse(httpResp) == HttpStatus.SC_FORBIDDEN) {
             throw new InsufficientScopeException("insufficient scope");
         }
         checkCommonResponse(httpResp);
     }
 
-    <T> T executeForJsonObjectFunc(CommandUrlHolder urlHolder, String commandName, List<NameValuePair> params,
+    void checkCommonResponse(Resp httpResp) throws InternalServerErrorException {
+
+        switch (getStatusCodeFromResponse(httpResp)) {
+            case HttpStatus.SC_BAD_REQUEST:
+                throw new ProtocolRequestException("invalid request");
+            case HttpStatus.SC_INTERNAL_SERVER_ERROR:
+                throw new InternalServerErrorException("internal yandex.money server error");
+        }
+
+        checkResponseNonEmpty(httpResp);
+    }
+
+    protected abstract void checkResponseNonEmpty(Resp httpResp);
+
+    <T> T executeForJsonObjectFunc(CommandUrlHolder urlHolder, String commandName, Map<String, String> params,
                                    String accessToken, Class<T> classOfT)
             throws InsufficientScopeException, IOException, InvalidTokenException {
 
-        HttpResponse response = null;
+        Resp response = null;
 
         try {
 
-            response = execPostRequest(new HttpPost(urlHolder.getUrlForCommand(commandName)),
+            response = execPostRequest(urlHolder.getUrlForCommand(commandName),
                     accessToken, params(params, urlHolder));
 
             checkApiCommandResponse(response);
 
-            return parseJson(response.getEntity(), classOfT);
+            return parseJson(classOfT, getInputStreamFromResponse(response));
+
         } finally {
-            if (response != null) {
-                consumeEntity(response.getEntity());
-            }
+            closeResponse(response);
         }
     }
 
-    /**
-     * Ensures that the entity content is fully consumed and the content stream, if exists,
-     * is closed.
-     *
-     * @param entity
-     * @throws IOException if an error occurs reading the input stream
-     *
-     * @since 4.1
-     */
-    public static void consumeEntity(final HttpEntity entity) throws IOException {
-        if (entity == null) {
-            return;
-        }
-        if (entity.isStreaming()) {
-            InputStream inputStream = entity.getContent();
-            if (inputStream != null) {
-                inputStream.close();
-            }
-        }
-    }
-
-    private List<NameValuePair> params(List<NameValuePair> params, CommandUrlHolder urlHolder) {
-        List<NameValuePair> result = new ArrayList<NameValuePair>(params);
-        result.addAll(urlHolder.getAdditionalParams());
+    private Map<String, String> params(Map<String, String> params, CommandUrlHolder urlHolder) {
+        HashMap<String, String> result = Maps.newHashMap(params);
+        result.putAll(urlHolder.getAdditionalParams());
         return result;
     }
+
+    protected abstract void closeResponse(Resp response) throws IOException;
+
+    protected abstract int getStatusCodeFromResponse(Resp httpResp);
 }

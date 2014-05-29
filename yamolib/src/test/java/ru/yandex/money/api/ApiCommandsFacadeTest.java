@@ -28,7 +28,7 @@ public class ApiCommandsFacadeTest {
 
     @BeforeClass
     public static void setUpClass() {
-        facade = new ApiCommandsFacadeImpl(YamoneyApiClient.createHttpClient(60000));
+        facade = new ApiCommandsFacadeImpl(YamoneyApiHttpClient.createHttpClient(60000));
     }
 
     @Test

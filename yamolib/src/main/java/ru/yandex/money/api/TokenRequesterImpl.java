@@ -1,5 +1,6 @@
 package ru.yandex.money.api;
 
+import com.google.common.collect.Maps;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.message.BasicNameValuePair;
@@ -9,9 +10,7 @@ import ru.yandex.money.api.rights.Permission;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * <p>Класс для получения токена для API Яндекс.Деньги. Реализует интерфейс TokenRequester.</p>
@@ -34,7 +33,7 @@ public class TokenRequesterImpl implements TokenRequester {
 
     private final String clientId;
 
-    private final YamoneyApiClient client;
+    private final YamoneyApiHttpClient client;
 
     /**
      * Создает экземпляр класса.
@@ -49,7 +48,7 @@ public class TokenRequesterImpl implements TokenRequester {
             throw new IllegalArgumentException("client_id is empty");
         }
         this.clientId = clientId;
-        this.client = new YamoneyApiClient(client);
+        this.client = new YamoneyApiHttpClient(client);
     }
 
     @Override
@@ -73,24 +72,24 @@ public class TokenRequesterImpl implements TokenRequester {
     @Override
     public ReceiveOAuthTokenResponse receiveOAuthToken(String code,
                                                        String redirectUri) throws IOException {
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        Map<String, String> params = Maps.newHashMap();
         return receiveOAuthToken(code, redirectUri, params);
     }
 
     @Override
     public ReceiveOAuthTokenResponse receiveOAuthToken(String code, String redirectUri,
                                                        String clientSecret) throws IOException {
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("client_secret", clientSecret));
+        Map<String, String> params = Maps.newHashMap();
+        params.put("client_secret", clientSecret);
         return receiveOAuthToken(code, redirectUri, params);
     }
 
     private ReceiveOAuthTokenResponse receiveOAuthToken(String code, String redirectUri,
-                                                        List<NameValuePair> params) throws IOException {
-        params.add(new BasicNameValuePair("grant_type", "authorization_code"));
-        params.add(new BasicNameValuePair("client_id", clientId));
-        params.add(new BasicNameValuePair("code", code));
-        params.add(new BasicNameValuePair("redirect_uri", redirectUri));
+                                                        Map<String, String> params) throws IOException {
+        params.put("grant_type", "authorization_code");
+        params.put("client_id", clientId);
+        params.put("code", code);
+        params.put("redirect_uri", redirectUri);
         return client.executeForJsonObjectCommon(TokenRequester.URI_YM_TOKEN, params, ReceiveOAuthTokenResponse.class);
     }
 

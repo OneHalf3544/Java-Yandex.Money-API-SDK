@@ -1,11 +1,9 @@
 package ru.yandex.money.api;
 
-import org.apache.http.HttpResponse;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.message.BasicNameValuePair;
 import ru.yandex.money.api.enums.MoneySource;
 import ru.yandex.money.api.enums.OperationHistoryType;
 import ru.yandex.money.api.response.*;
@@ -14,7 +12,9 @@ import ru.yandex.money.api.rights.IdentifierType;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Map;
 
 /**
  * <p>Класс для работы с командами API Яндекс.Деньги. </p>
@@ -47,7 +47,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
     };
 
     private final CommandUrlHolder uri;
-    private final YamoneyApiClient yamoneyApiClient;
+    private final YamoneyApiClient<?, ?> yamoneyApiClient;
 
     /**
      * Создает экземпляр класса.
@@ -68,7 +68,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
      *               c таймаутом до 60 секунд.
      */
     public ApiCommandsFacadeImpl(HttpClient client, CommandUrlHolder urlHolder) {
-        this.yamoneyApiClient = new YamoneyApiClient(client);
+        this.yamoneyApiClient = new YamoneyApiHttpClient(client);
         this.uri = urlHolder;
     }
 
@@ -99,7 +99,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
     @Override
     public AccountInfoResponse accountInfo(String accessToken)
             throws IOException, InvalidTokenException, InsufficientScopeException {
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, ACCOUNT_INFO_COMMAND_NAME, Collections.<NameValuePair>emptyList(), accessToken, AccountInfoResponse.class);
+        return yamoneyApiClient.executeForJsonObjectFunc(uri, ACCOUNT_INFO_COMMAND_NAME, Collections.<String, String>emptyMap(), accessToken, AccountInfoResponse.class);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                                                      Date from, Date till, String label) throws IOException,
             InvalidTokenException, InsufficientScopeException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
+        Map<String, String> params = Maps.newHashMap();
 
         addParamIfNotNull("start_record", startRecord, params);
         addParamIfNotNull("records", records, params);
@@ -145,16 +145,19 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
         addParamIfNotNull("till", till, params);
         addParamIfNotNull("label", label, params);
 
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, OPERATION_HISTORY_COMMAND_NAME, params, accessToken, OperationHistoryResponse.class);
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, OPERATION_HISTORY_COMMAND_NAME, params, accessToken, OperationHistoryResponse.class);
     }
 
     @Override
     public FundraisingStatsResponse fundraisingStats(String accessToken, String label)
             throws IOException, InvalidTokenException, InsufficientScopeException {
 
-        ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("label", label));
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, FUNDRAISING_STATS_COMMAND_NAME, params, accessToken, FundraisingStatsResponse.class);
+        Map<String, String> params = ImmutableMap.of(
+                "label", label
+        );
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, FUNDRAISING_STATS_COMMAND_NAME, params, accessToken, FundraisingStatsResponse.class);
     }
 
     @Override
@@ -162,10 +165,11 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                                                    String operationId) throws IOException, InvalidTokenException,
             InsufficientScopeException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("operation_id", operationId));
-
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, OPERATION_DETAILS_COMMAND_NAME, params, accessToken, OperationDetailResponse.class);
+        Map<String, String> params = ImmutableMap.of(
+                "operation_id", operationId
+        );
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, OPERATION_DETAILS_COMMAND_NAME, params, accessToken, OperationDetailResponse.class);
     }
 
     @Override
@@ -173,8 +177,8 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                                                     BigDecimal amount, String comment, String message)
             throws IOException, InvalidTokenException, InsufficientScopeException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("amount", String.valueOf(amount)));
+        Map<String, String> params = Maps.newHashMap();
+        params.put("amount", String.valueOf(amount));
         return requestPaymentP2P(accessToken, to, comment, message, null, params);
     }
 
@@ -183,8 +187,8 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                                                     BigDecimal amount, String comment, String message, String label)
             throws IOException, InvalidTokenException, InsufficientScopeException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("amount", String.valueOf(amount)));
+        Map<String, String> params = Maps.newHashMap();
+        params.put("amount", String.valueOf(amount));
         addParamIfNotNull("identifier_type", identifierType, params);
         return requestPaymentP2P(accessToken, to, comment, message, label, params);
     }
@@ -195,35 +199,38 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                                                        String label)
             throws IOException, InvalidTokenException, InsufficientScopeException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("amount_due", String.valueOf(amountDue)));
+        Map<String, String> params = Maps.newHashMap();
+        params.put("amount_due", String.valueOf(amountDue));
         addParamIfNotNull("identifier_type", identifierType, params);
         return requestPaymentP2P(accessToken, to, comment, message, label, params);
     }
 
     private RequestPaymentResponse requestPaymentP2P(String accessToken, String to,
                                                      String comment, String message, String label,
-                                                     List<NameValuePair> params)
+                                                     Map<String, String> params)
             throws IOException, InvalidTokenException, InsufficientScopeException {
 
-        params.add(new BasicNameValuePair("pattern_id", "p2p"));
-        params.add(new BasicNameValuePair("to", to));
+        params.put("pattern_id", "p2p");
+        params.put("to", to);
         addParamIfNotNull("comment", comment, params);
         addParamIfNotNull("message", message, params);
         addParamIfNotNull("label", label, params);
 
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, REQUEST_PAYMENT_COMMAND_NAME, params, accessToken, RequestPaymentResponse.class);
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, REQUEST_PAYMENT_COMMAND_NAME, params, accessToken, RequestPaymentResponse.class);
     }
 
     @Override
     public RequestPaymentResponse requestPaymentToPhone(String accessToken, String phone, BigDecimal amount)
             throws InsufficientScopeException, InvalidTokenException, IOException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("pattern_id", "phone-topup"));
-        params.add(new BasicNameValuePair("phone-number", phone));
-        params.add(new BasicNameValuePair("amount", String.valueOf(amount)));
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, REQUEST_PAYMENT_COMMAND_NAME, params, accessToken, RequestPaymentResponse.class);
+        Map<String, String> params = ImmutableMap.of(
+                "pattern_id", "phone-topup",
+                "phone-number", phone,
+                "amount", String.valueOf(amount));
+
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, REQUEST_PAYMENT_COMMAND_NAME, params, accessToken, RequestPaymentResponse.class);
     }
 
     @Override
@@ -239,16 +246,17 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                                                      Map<String, String> params, boolean showContractDetails) throws IOException,
             InvalidTokenException, InsufficientScopeException {
 
-        List<NameValuePair> pars = new ArrayList<NameValuePair>();
-        pars.add(new BasicNameValuePair("pattern_id", patternId));
+        Map<String, String> pars = Maps.newHashMap();
+        pars.put("pattern_id", patternId);
         for (String name : params.keySet()) {
-            pars.add(new BasicNameValuePair(name, params.get(name)));
+            pars.put(name, params.get(name));
         }
         if (showContractDetails) {
-            pars.add(new BasicNameValuePair("show_contract_details", "true"));
+            pars.put("show_contract_details", "true");
         }
 
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, REQUEST_PAYMENT_COMMAND_NAME, pars, accessToken, RequestPaymentResponse.class);
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, REQUEST_PAYMENT_COMMAND_NAME, pars, accessToken, RequestPaymentResponse.class);
     }
 
     @Override
@@ -270,22 +278,28 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
             throws IOException, InsufficientScopeException,
             InvalidTokenException {
 
-        List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("request_id", requestId));
-        params.add(new BasicNameValuePair("money_source", moneySource.toString()));
+        Map<String, String> params = Maps.newHashMap();
+        params.put("request_id", requestId);
+        params.put("money_source", moneySource.toString());
         if (csc != null && (moneySource.equals(MoneySource.card))) {
-            params.add(new BasicNameValuePair("csc", csc));
+            params.put("csc", csc);
         }
-        return yamoneyApiClient.executeForJsonObjectFunc(uri, PROCESS_PAYMENT_COMMAND_NAME, params, accessToken, ProcessPaymentResponse.class);
+        return yamoneyApiClient.executeForJsonObjectFunc(
+                uri, PROCESS_PAYMENT_COMMAND_NAME, params, accessToken, ProcessPaymentResponse.class);
     }
 
     @Override
     public void revokeOAuthToken(String accessToken) throws InvalidTokenException, IOException {
-        HttpResponse response = null;
+        revokeToken(yamoneyApiClient, accessToken);
+    }
+
+    private <Resp> void revokeToken(YamoneyApiClient<?, Resp> yamoneyApiClient, String accessToken)
+            throws IOException, InvalidTokenException {
+        Resp response = null;
         try {
-            response = yamoneyApiClient.execPostRequest(new HttpPost(uri.getUrlForCommand(REVOKE_COMMAND_NAME)),
-                    accessToken, Collections.<NameValuePair>emptyList());
-            switch (response.getStatusLine().getStatusCode()) {
+            response = yamoneyApiClient.execPostRequest(uri.getUrlForCommand(REVOKE_COMMAND_NAME),
+                    accessToken, Collections.<String, String>emptyMap());
+            switch (yamoneyApiClient.getStatusCodeFromResponse(response)) {
                 case HttpStatus.SC_UNAUTHORIZED:
                     throw new InvalidTokenException("invalid token");
                 case HttpStatus.SC_BAD_REQUEST:
@@ -294,23 +308,21 @@ public class ApiCommandsFacadeImpl implements ApiCommandsFacade {
                     throw new InternalServerErrorException("internal yandex.money server error");
             }
         } finally {
-            if (response != null) {
-                YamoneyApiClient.consumeEntity(response.getEntity());
-            }
+            yamoneyApiClient.closeResponse(response);
         }
     }
 
-    private void addParamIfNotNull(String paramName, Object value, List<NameValuePair> params) {
+    private void addParamIfNotNull(String paramName, Object value, Map<String, String> params) {
         if (value != null) {
-            params.add(new BasicNameValuePair(paramName, String.valueOf(value)));
+            params.put(paramName, String.valueOf(value));
         }
     }
 
-    private void addParamIfNotNull(String paramName, Date date, List<NameValuePair> params) {
+    private void addParamIfNotNull(String paramName, Date date, Map<String, String> params) {
         if (date == null) {
             return;
         }
-        params.add(new BasicNameValuePair(paramName, formatDate(date)));
+        params.put(paramName, formatDate(date));
     }
 
     String formatDate(Date date) {

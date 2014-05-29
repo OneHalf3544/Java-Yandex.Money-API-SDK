@@ -1,13 +1,11 @@
 package ru.yandex.money.api;
 
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
 import ru.yandex.money.api.response.util.PaymentErrorCode;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.net.URI;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Объект для формирования url для тестовых запросов.
@@ -43,8 +41,8 @@ public class TestUrlHolder implements CommandUrlHolder {
     }
 
     @Override
-    public String getUrlForCommand(String commandName) {
-        return url + '/' + commandName;
+    public URI getUrlForCommand(String commandName) {
+        return URI.create(url + '/' + commandName);
     }
 
     public boolean isTestPayment() {
@@ -83,19 +81,19 @@ public class TestUrlHolder implements CommandUrlHolder {
     }
 
     @Override
-    public Collection<NameValuePair> getAdditionalParams() {
+    public Map<String, String> getAdditionalParams() {
         if (!testPayment) {
-            return Collections.emptyList();
+            return Collections.emptyMap();
         }
 
-        List<NameValuePair> result = new ArrayList<NameValuePair>();
-        result.add(new BasicNameValuePair("test_payment", "true"));
+        Map<String, String> result = new HashMap<String, String>();
+        result.put("test_payment", "true");
 
         if (testCard != null) {
-            result.add(new BasicNameValuePair("test_card", testCard));
+            result.put("test_card", testCard);
         }
         if (testResult != null) {
-            result.add(new BasicNameValuePair("test_result", testResult.getCode()));
+            result.put("test_result", testResult.getCode());
         }
         return result;
     }
