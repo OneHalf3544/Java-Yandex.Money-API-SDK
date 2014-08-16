@@ -26,9 +26,10 @@ public class YamoneyOkApiClient extends YamoneyApiClient<Request.Builder, Respon
     }
 
     public static OkHttpClient createOkHttpClient(int socketTimeout) {
-        return new OkHttpClient()
-                .setConnectTimeout(4, SECONDS)
-                .setReadTimeout(socketTimeout, MILLISECONDS);
+        OkHttpClient okHttpClient = new OkHttpClient();
+        okHttpClient.setConnectTimeout(4, SECONDS);
+        okHttpClient.setReadTimeout(socketTimeout, MILLISECONDS);
+        return okHttpClient;
     }
 
     @Override
