@@ -1,12 +1,15 @@
-apply plugin: 'java'
-
 version = 1.0
 
 
 allprojects {
-    apply plugin: "java"
+    apply plugin: 'java'
 
-    compileJava {
+    configurations {
+        provided
+        compile.extendsFrom provided
+    }
+
+    compileJava{
         options.encoding = "UTF-8"
     }
 
@@ -20,4 +23,3 @@ allprojects {
         testCompile 'org.hamcrest:hamcrest-all:1.3'
     }
 }
-
